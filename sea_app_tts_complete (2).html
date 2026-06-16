@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>우리나라 바다 알아보기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: 'Pretendard', -apple-system, sans-serif; background: #f0f8ff; overflow-x: hidden; touch-action: manipulation; }
+  body { color: #1f2937; }
+
+  /* 공통 화면 */
+  .screen { display: none; min-height: 100vh; padding: 24px; }
+  .screen.active { display: block; }
+
+  /* 헤더 */
+  .top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #fff; border-radius: 16px; padding: 14px 22px; margin-bottom: 20px;
+    border: 2px solid #e0eaf5;
+  }
+  .top-title { font-size: 28px; font-weight: 800; color: #1e3a8a; }
+  .home-btn {
+    background: #3b82f6; color: white; border: none; padding: 12px 22px;
+    border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer;
+  }
+
+  /* 메인 화면 */
+  .main-title { font-size: 48px; font-weight: 900; color: #1e3a8a; text-align: center; margin: 30px 0 10px; }
+  .main-sub { font-size: 22px; color: #4b5563; text-align: center; margin-bottom: 40px; }
+
+  .sea-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto 30px; }
+  .sea-card {
+    background: white; border-radius: 20px; padding: 30px 20px; text-align: center;
+    border: 3px solid; cursor: pointer; transition: transform 0.15s;
+  }
+  .sea-card:active { transform: scale(0.97); }
+  .sea-card.donghae { border-color: #3b82f6; }
+  .sea-card.seohae { border-color: #f59e0b; }
+  .sea-card.namhae { border-color: #10b981; }
+  .sea-card .icon { font-size: 70px; margin-bottom: 12px; }
+  .sea-card .name { font-size: 32px; font-weight: 800; color: #1f2937; }
+
+  .report-section {
+    max-width: 1000px; margin: 0 auto;
+    background: white; border-radius: 20px; padding: 30px; border: 2px dashed #cbd5e1;
+  }
+  .report-title { font-size: 26px; font-weight: 800; color: #1e3a8a; text-align: center; margin-bottom: 20px; }
+  .level-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .level-card {
+    background: #fef3c7; border: 3px solid #f59e0b; border-radius: 16px;
+    padding: 24px; text-align: center; cursor: pointer; transition: transform 0.15s;
+  }
+  .level-card:active { transform: scale(0.97); }
+  .level-card .level-name { font-size: 40px; font-weight: 900; color: #92400e; }
+  .level-card .level-desc { font-size: 16px; color: #78350f; margin-top: 8px; }
+
+  /* 단계별 콘텐츠 */
+  .step-container {
+    max-width: 1000px; margin: 0 auto;
+    background: white; border-radius: 20px; padding: 28px; border: 2px solid #e0eaf5;
+  }
+  .step-indicator {
+    display: flex; justify-content: center; gap: 12px; margin-bottom: 22px;
+  }
+  .step-dot {
+    width: 50px; height: 50px; border-radius: 50%; background: #e5e7eb;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #6b7280;
+  }
+  .step-dot.active { background: #3b82f6; color: white; }
+  .step-dot.done { background: #10b981; color: white; }
+
+  .step-title { font-size: 30px; font-weight: 800; color: #1e3a8a; text-align: center; margin-bottom: 20px; }
+
+  .step-content { display: none; }
+  .step-content.active { display: block; }
+
+  /* 지도 */
+  .map-wrap { display: flex; justify-content: center; margin: 10px 0 20px; }
+  .map-svg { width: 100%; max-width: 500px; height: auto; }
+  .map-label { font-size: 28px; font-weight: 900; }
+
+  /* 사진 갤러리 */
+  .photo-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin: 10px 0 20px; }
+  .photo-item {
+    background: #f9fafb; border-radius: 14px; overflow: hidden; border: 2px solid #e5e7eb;
+  }
+  .photo-item img { width: 100%; height: 220px; object-fit: cover; display: block; }
+  .photo-caption {
+    font-size: 22px; font-weight: 700; color: #1f2937; text-align: center; padding: 12px;
+    background: white;
+  }
+
+  /* 특징 */
+  .feature-box {
+    background: #f0f9ff; border: 3px solid #3b82f6; border-radius: 16px;
+    padding: 24px; margin-bottom: 16px; display: flex; gap: 20px; align-items: center;
+  }
+  .feature-box.orange { background: #fff7ed; border-color: #f59e0b; }
+  .feature-box.green { background: #ecfdf5; border-color: #10b981; }
+  .feature-box img { width: 200px; height: 140px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+  .feature-text { font-size: 26px; font-weight: 700; color: #1f2937; }
+
+  /* 네비게이션 버튼 */
+  .nav-buttons {
+    display: flex; justify-content: space-between; gap: 16px; margin-top: 24px;
+  }
+  .nav-btn {
+    flex: 1; padding: 18px; font-size: 24px; font-weight: 800;
+    border: none; border-radius: 14px; cursor: pointer; transition: transform 0.1s;
+  }
+  .nav-btn:active { transform: scale(0.97); }
+  .nav-btn.prev { background: #e5e7eb; color: #374151; }
+  .nav-btn.next { background: #3b82f6; color: white; }
+  .nav-btn.finish { background: #10b981; color: white; }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* 보고서 - 캔버스 */
+  .canvas-wrap {
+    position: relative; background: #fffef7;
+    border: 2px dashed #9ca3af; border-radius: 10px; margin: 8px 0;
+  }
+  .write-canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; background: transparent; }
+  .canvas-tools { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+  .tool-btn {
+    background: #f3f4f6; border: 2px solid #d1d5db; padding: 8px 16px;
+    font-size: 16px; font-weight: 700; border-radius: 8px; cursor: pointer;
+  }
+
+  /* 보고서 지도 (캔버스 위치 표시용) */
+  .report-map-wrap { position: relative; max-width: 500px; margin: 0 auto; }
+  .report-map-wrap svg { width: 100%; display: block; }
+  .map-canvas {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    touch-action: none; cursor: crosshair;
+  }
+
+  .question-block {
+    background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 14px;
+    padding: 20px; margin-bottom: 18px;
+  }
+  .question-title { font-size: 24px; font-weight: 800; color: #1e3a8a; margin-bottom: 14px; }
+  .question-sub { font-size: 18px; color: #4b5563; margin-bottom: 10px; }
+
+  /* 사진 선택 */
+  .photo-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .photo-choice {
+    border: 4px solid transparent; border-radius: 12px; overflow: hidden; cursor: pointer;
+    background: white; transition: all 0.15s;
+  }
+  .photo-choice img { width: 100%; height: 120px; object-fit: cover; display: block; }
+  .photo-choice.selected { border-color: #10b981; }
+  .photo-choice.correct { border-color: #10b981; background: #d1fae5; }
+  .photo-choice.wrong { border-color: #ef4444; background: #fee2e2; }
+  .photo-choice .label { font-size: 14px; padding: 6px; text-align: center; font-weight: 600; }
+
+  /* 빈칸 */
+  .fill-sentence {
+    font-size: 24px; line-height: 2; color: #1f2937;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .fill-sentence .blank-canvas-wrap {
+    display: inline-block; vertical-align: middle;
+  }
+  .fill-sentence .blank-canvas-wrap canvas {
+    border: 2px dashed #3b82f6; border-radius: 8px; background: #fffef7;
+    touch-action: none; cursor: crosshair;
+  }
+  .trace-hint {
+    font-size: 32px; color: #d1d5db; font-weight: 700; pointer-events: none;
+  }
+
+  /* 가/나/다 라벨 */
+  .level-badge {
+    display: inline-block; padding: 6px 18px; background: #1e3a8a; color: white;
+    font-size: 22px; font-weight: 800; border-radius: 10px; margin-bottom: 16px;
+  }
+
+  /* 완료 */
+  .finish-msg {
+    text-align: center; padding: 40px 20px;
+  }
+  .finish-msg .emoji { font-size: 80px; }
+  .finish-msg .title { font-size: 36px; font-weight: 900; color: #10b981; margin: 20px 0; }
+  .finish-msg .sub { font-size: 22px; color: #4b5563; }
+
+  /* 색힌트 지도 (나 수준) */
+  .color-hint { padding: 12px; background: #fef3c7; border-radius: 10px; margin-bottom: 14px; font-size: 18px; }
+  .color-hint span { display: inline-block; width: 18px; height: 18px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+
+  @media (max-width: 768px) {
+    .sea-cards, .level-cards { grid-template-columns: 1fr; }
+    .feature-box { flex-direction: column; }
+    .feature-box img { width: 100%; }
+  }
+
+  /* TTS 버튼 스타일 */
+  .tts-btn {
+    background: transparent;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    margin-left: 12px;
+    padding: 4px 8px;
+    transition: all 0.3s ease;
+    vertical-align: middle;
+  }
+  .tts-btn:hover {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+  .tts-btn:active {
+    transform: scale(0.95);
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 메인 화면 ========== -->
+<div id="screen-main" class="screen active">
+  <div class="top-bar">
+    <div class="top-title">🌊 우리나라 바다 알아보기</div>
+  </div>
+  <h1 class="main-title">우리나라의 바다</h1>
+  <p class="main-sub">알고 싶은 바다를 눌러보세요</p>
+
+  <div class="sea-cards">
+    <div class="sea-card donghae" onclick="startSea('donghae')">
+      <div class="icon">🌅</div>
+      <div class="name">동해</div>
+    </div>
+    <div class="sea-card seohae" onclick="startSea('seohae')">
+      <div class="icon">🦪</div>
+      <div class="name">서해</div>
+    </div>
+    <div class="sea-card namhae" onclick="startSea('namhae')">
+      <div class="icon">🏝️</div>
+      <div class="name">남해</div>
+    </div>
+  </div>
+
+  <div class="report-section">
+    <div class="report-title">📝 보고서 작성하기</div>
+    <div class="level-cards">
+      <div class="level-card" onclick="startReport('ga')">
+        <div class="level-name">가</div>
+        <div class="level-desc">빈칸에 직접 써 보기</div>
+      </div>
+      <div class="level-card" onclick="startReport('na')">
+        <div class="level-name">나</div>
+        <div class="level-desc">힌트 보고 따라 쓰기</div>
+      </div>
+      <div class="level-card" onclick="startReport('da')">
+        <div class="level-name">다</div>
+        <div class="level-desc">사진 골라 누르기</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 바다 학습 화면 ========== -->
+<div id="screen-sea" class="screen">
+  <div class="top-bar">
+    <div class="top-title" id="sea-screen-title">바다</div>
+    <button class="home-btn" onclick="goHome()">🏠 처음으로</button>
+  </div>
+
+  <div class="step-container">
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot-1">1</div>
+      <div class="step-dot" id="dot-2">2</div>
+      <div class="step-dot" id="dot-3">3</div>
+    </div>
+
+    <!-- Step 1: 위치 -->
+    <div class="step-content active" id="step-1">
+      <div class="step-title">1. 위치 알아보기</div>
+      <div class="map-wrap" id="map-step1"></div>
+    </div>
+
+    <!-- Step 2: 사진 -->
+    <div class="step-content" id="step-2">
+      <div class="step-title">2. 사진 보기</div>
+      <div class="photo-gallery" id="photo-gallery"></div>
+    </div>
+
+    <!-- Step 3: 특징 -->
+    <div class="step-content" id="step-3">
+      <div class="step-title">3. 특징 알아보기</div>
+      <div id="feature-list"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn prev" id="btn-prev" onclick="prevStep()">◀ 이전</button>
+      <button class="nav-btn next" id="btn-next" onclick="nextStep()">다음 ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 보고서 화면 ========== -->
+<div id="screen-report" class="screen">
+  <div class="top-bar">
+    <div class="top-title" id="report-screen-title">보고서</div>
+    <button class="home-btn" onclick="goHome()">🏠 처음으로</button>
+  </div>
+  <div class="step-container" id="report-container"></div>
+</div>
+
+<script>
+// ============= 데이터 =============
+const SEA_DATA = {
+  donghae: {
+    name: '동해',
+    color: '#3b82f6',
+    icon: '🌅',
+    photos: [
+      { src: 'https://images.wrks.ai/dalle/thC1AqeSjANWwchocAJZd1dbuOC5DvkTvpBqbHrr.png', cap: '단조로운 해안선' },
+      { src: 'https://images.wrks.ai/dalle/0FgqGQuaEQSU1GGKjy0RSns0x28zCZjIty7dHHcP.png', cap: '해수욕장' },
+      { src: 'https://images.wrks.ai/dalle/HFUdoa8CWh7aeHWepMczS5bxS82dVzhFyXRYuMDv.png', cap: '일출' }
+    ],
+    features: [
+      { img: 'https://images.wrks.ai/dalle/thC1AqeSjANWwchocAJZd1dbuOC5DvkTvpBqbHrr.png', text: '해안선이 단조롭다' },
+      { img: 'https://images.wrks.ai/dalle/0FgqGQuaEQSU1GGKjy0RSns0x28zCZjIty7dHHcP.png', text: '해수욕장이 많다' }
+    ]
+  },
+  seohae: {
+    name: '서해',
+    color: '#f59e0b',
+    icon: '🦪',
+    photos: [
+      { src: 'https://images.wrks.ai/dalle/VKa866vjzsmSUqNS1OeocqeW1yfE6i7Z3c6nVAd2.png', cap: '복잡한 해안선' },
+      { src: 'https://images.wrks.ai/dalle/ZgxpEa9IS5wcffu92cPekKybKgbHEn8JvsgXRw5D.png', cap: '갯벌' }
+    ],
+    features: [
+      { img: 'https://images.wrks.ai/dalle/VKa866vjzsmSUqNS1OeocqeW1yfE6i7Z3c6nVAd2.png', text: '해안선이 복잡하다' },
+      { img: 'https://images.wrks.ai/dalle/ZgxpEa9IS5wcffu92cPekKybKgbHEn8JvsgXRw5D.png', text: '갯벌이 많다' }
+    ],
+    cls: 'orange'
+  },
+  namhae: {
+    name: '남해',
+    color: '#10b981',
+    icon: '🏝️',
+    photos: [
+      { src: 'https://images.wrks.ai/dalle/hxFw4GBduLqdDwbA8jFLYRLf16JxPlTE9GmkMqan.png', cap: '복잡한 해안선' },
+      { src: 'https://images.wrks.ai/dalle/oUOC638jP3pQF4LX8rD0N6NOACURkn4knPekclfT.png', cap: '많은 섬' }
+    ],
+    features: [
+      { img: 'https://images.wrks.ai/dalle/hxFw4GBduLqdDwbA8jFLYRLf16JxPlTE9GmkMqan.png', text: '해안선이 복잡하다' },
+      { img: 'https://images.wrks.ai/dalle/oUOC638jP3pQF4LX8rD0N6NOACURkn4knPekclfT.png', text: '섬이 많다' }
+    ],
+    cls: 'green'
+  }
+};
+
+// 한국 지도 SVG (단순화)
+function makeMapSVG(highlight, opts = {}) {
+  // highlight: 'donghae' | 'seohae' | 'namhae' | 'all' | null
+  // opts: { showLabels:bool, colorHint:bool, boxes:'write'|'trace'|null }
+  const showLabels = opts.showLabels !== false;
+  const colorHint = opts.colorHint || false;
+  const boxes = opts.boxes || null;
+
+  const seas = [
+    { key: 'donghae', name: '동해', color: '#1d4ed8',
+      hi:    { left: '72%', top: '12%', width: '24%', height: '40%' },
+      box:   { left: '70%', top: '28%', width: '22%', height: '18%' },
+      label: { left: '70%', top: '6%',  width: '24%' } },
+    { key: 'seohae', name: '서해', color: '#b45309',
+      hi:    { left: '4%',  top: '20%', width: '22%', height: '38%' },
+      box:   { left: '6%',  top: '34%', width: '20%', height: '18%' },
+      label: { left: '4%',  top: '14%', width: '22%' } },
+    { key: 'namhae', name: '남해', color: '#047857',
+      hi:    { left: '27%', top: '76%', width: '46%', height: '12%' },
+      box:   { left: '38%', top: '78%', width: '24%', height: '14%' },
+      label: { left: '32%', top: '92%', width: '36%' } }
+  ];
+
+  const imgUrl = 'https://images.wrks.ai/dalle/Pfuso9MyZzbdKqz0QmXtGDrCmi76eKFPzcumQsoS.png';
+
+  let overlay = '';
+
+  // 하이라이트(색 박스 + 라벨) — boxes 모드가 아닐 때만
+  if (!boxes) {
+    seas.forEach(function(s) {
+      const isHi = (highlight === s.key) || (highlight === 'all') || colorHint;
+      if (!isHi) return;
+      // 반투명 컬러 박스
+      overlay += '<div style="position:absolute; left:' + s.hi.left + '; top:' + s.hi.top +
+                 '; width:' + s.hi.width + '; height:' + s.hi.height +
+                 '; background:' + s.color + '33; border:4px solid ' + s.color +
+                 '; border-radius:12px; box-sizing:border-box; pointer-events:none;"></div>';
+      if (showLabels) {
+        overlay += '<div style="position:absolute; left:' + s.label.left + '; top:' + s.label.top +
+                   '; width:' + s.label.width + '; text-align:center; color:' + s.color +
+                   '; font-size:26px; font-weight:900; pointer-events:none;' +
+                   ' text-shadow: 0 0 4px #fff, 0 0 4px #fff, 0 0 4px #fff, 0 0 4px #fff;">' +
+                   s.name + '</div>';
+      }
+    });
+  }
+
+  // 쓰기 박스 (가 보고서 Q1) — 빈 박스, 라벨 없음
+  if (boxes === 'write') {
+    seas.forEach(function(s) {
+      overlay += '<div style="position:absolute; left:' + s.box.left + '; top:' + s.box.top +
+                 '; width:' + s.box.width + '; height:' + s.box.height +
+                 '; background:rgba(255,255,255,0.85); border:3px dashed ' + s.color +
+                 '; border-radius:10px; box-sizing:border-box; pointer-events:none;"></div>';
+    });
+  }
+
+  // 따라쓰기 박스 (나 보고서 Q1) — 박스 안에 희미한 글자
+  if (boxes === 'trace') {
+    seas.forEach(function(s) {
+      overlay += '<div style="position:absolute; left:' + s.box.left + '; top:' + s.box.top +
+                 '; width:' + s.box.width + '; height:' + s.box.height +
+                 '; background:rgba(255,255,255,0.85); border:3px dashed ' + s.color +
+                 '; border-radius:10px; box-sizing:border-box; pointer-events:none;' +
+                 ' display:flex; align-items:center; justify-content:center;' +
+                 ' font-size:34px; font-weight:900; color:' + s.color + '40;' +
+                 ' letter-spacing:2px;">' + s.name + '</div>';
+    });
+  }
+
+  return '<div style="position:relative; width:100%;">' +
+         '<img src="' + imgUrl + '" alt="우리나라 지도" ' +
+         'style="width:100%; height:auto; display:block; border-radius:12px; border:2px solid #d1d5db;"/>' +
+         overlay +
+         '</div>';
+}
+
+
+// ============= 상태 =============
+let currentSea = null;
+let currentStep = 1;
+
+// ============= 화면 전환 =============
+function showScreen(id) {
+  stopCurrentSpeech();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  showScreen('screen-main');
+}
+
+// ============= 바다 학습 =============
+function startSea(seaKey) {
+  currentSea = seaKey;
+  currentStep = 1;
+  const data = SEA_DATA[seaKey];
+  document.getElementById('sea-screen-title').textContent = data.icon + ' ' + data.name;
+
+  // Step 1: 지도
+  document.getElementById('map-step1').innerHTML = makeMapSVG(seaKey);
+
+  // Step 2: 사진 갤러리
+  const gallery = document.getElementById('photo-gallery');
+  gallery.innerHTML = data.photos.map(p => `
+    <div class="photo-item">
+      <img src="${p.src}" alt="${p.cap}" onerror="this.style.background='#e5e7eb';this.alt='사진 없음';">
+      <div class="photo-caption">${p.cap}</div>
+    </div>
+  `).join('');
+
+  // Step 3: 특징
+  const featureList = document.getElementById('feature-list');
+  const cls = data.cls || '';
+  featureList.innerHTML = data.features.map(f => `
+    <div class="feature-box ${cls}">
+      <img src="${f.img}" alt="${f.text}" onerror="this.style.background='#e5e7eb';">
+      <div class="feature-text">${f.text}</div>
+    </div>
+  `).join('');
+
+  updateStepUI();
+  showScreen('screen-sea');
+}
+
+function updateStepUI() {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('dot-' + i);
+    const content = document.getElementById('step-' + i);
+    dot.classList.remove('active', 'done');
+    content.classList.remove('active');
+    if (i < currentStep) dot.classList.add('done');
+    else if (i === currentStep) { dot.classList.add('active'); content.classList.add('active'); }
+  }
+  document.getElementById('btn-prev').disabled = currentStep === 1;
+  const nextBtn = document.getElementById('btn-next');
+  if (currentStep === 3) {
+    nextBtn.textContent = '🏠 처음으로';
+    nextBtn.classList.remove('next');
+    nextBtn.classList.add('finish');
+  } else {
+    nextBtn.textContent = '다음 ▶';
+    nextBtn.classList.add('next');
+    nextBtn.classList.remove('finish');
+  }
+}
+
+function nextStep() {
+  if (currentStep === 3) { goHome(); return; }
+  currentStep++;
+  updateStepUI();
+}
+function prevStep() {
+  if (currentStep > 1) { currentStep--; updateStepUI(); }
+}
+
+// ============= 캔버스 그리기 =============
+function setupCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * 2;
+  canvas.height = rect.height * 2;
+  ctx.scale(2, 2);
+  ctx.strokeStyle = '#1e3a8a';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  let drawing = false;
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function start(e) { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+  function move(e) { if (!drawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+  function end(e) { drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('mouseleave', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+
+  canvas._clear = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+function clearCanvas(id) {
+  const c = document.getElementById(id);
+  if (c && c._clear) c._clear();
+}
+
+// ============= 보고서 =============
+function startReport(level) {
+  const titles = { ga: '가', na: '나', da: '다' };
+  document.getElementById('report-screen-title').textContent = '📝 보고서 - ' + titles[level];
+  const container = document.getElementById('report-container');
+
+  if (level === 'ga') container.innerHTML = reportGa();
+  else if (level === 'na') container.innerHTML = reportNa();
+  else container.innerHTML = reportDa();
+
+  showScreen('screen-report');
+
+  // 캔버스 셋업
+  setTimeout(() => {
+    document.querySelectorAll('canvas.write-canvas, canvas.blank-canvas, canvas.map-canvas').forEach(setupCanvas);
+  }, 100);
+}
+
+// === 가: 빈칸 직접 쓰기 ===
+function reportGa() {
+  return `
+    <div class="level-badge">가</div>
+    <div class="question-block">
+      <div class="question-title">1. 지도에서 바다의 위치를 찾아 이름을 써 보세요 <button class="tts-btn" onclick="readQuestion('ga', 1)">🔊</button></div>
+      <div class="question-sub">동해, 서해, 남해를 알맞은 곳에 써 넣으세요</div>
+      <div class="report-map-wrap">
+        ${makeMapSVG(null, { showLabels: false, boxes: 'write' })}
+        <canvas class="map-canvas write-canvas" id="ga-map-canvas"></canvas>
+      </div>
+      <div class="canvas-tools">
+        <button class="tool-btn" onclick="clearCanvas('ga-map-canvas')">🗑️ 지우기</button>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <div class="question-title">2. 알맞은 사진을 골라 보세요 <button class="tts-btn" onclick="readQuestion('ga', 2)">🔊</button></div>
+      ${photoChoiceBlock('ga', 'donghae', '동해', 3)}
+      ${photoChoiceBlock('ga', 'seohae', '서해', 3)}
+      ${photoChoiceBlock('ga', 'namhae', '남해', 3)}
+    </div>
+
+    <div class="question-block">
+      <div class="question-title">3. 빈칸에 알맞은 말을 써 보세요 <button class="tts-btn" onclick="readQuestion('ga', 3)">🔊</button></div>
+      ${fillBlank('ga-b1', '동해에는 ', '이 많다', null)}
+      ${fillBlank('ga-b2', '서해에는 ', '이 많다', null)}
+      ${fillBlank('ga-b3', '남해에는 ', '이 많다', null)}
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn finish" onclick="goHome()">✅ 다 했어요!</button>
+    </div>
+  `;
+}
+
+// === 나: 따라 쓰기 (힌트) ===
+function reportNa() {
+  return `
+    <div class="level-badge">나</div>
+    <div class="question-block">
+      <div class="question-title">1. 색깔 힌트를 보고 바다 이름을 써 보세요 <button class="tts-btn" onclick="readQuestion('na', 1)">🔊</button></div>
+      <div class="color-hint">
+        <span style="background:#3b82f6"></span>파란색 = 동해
+        <span style="background:#f59e0b; margin-left:14px"></span>노란색 = 서해
+        <span style="background:#10b981; margin-left:14px"></span>초록색 = 남해
+      </div>
+      <div class="report-map-wrap">
+        ${makeMapSVG(null, { showLabels: false, boxes: 'trace' })}
+        <canvas class="map-canvas write-canvas" id="na-map-canvas"></canvas>
+      </div>
+      <div class="canvas-tools">
+        <button class="tool-btn" onclick="clearCanvas('na-map-canvas')">🗑️ 지우기</button>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <div class="question-title">2. 알맞은 사진을 골라 보세요 <button class="tts-btn" onclick="readQuestion('ga', 2)">🔊</button></div>
+      ${photoChoiceBlock('na', 'donghae', '동해', 2)}
+      ${photoChoiceBlock('na', 'seohae', '서해', 2)}
+      ${photoChoiceBlock('na', 'namhae', '남해', 2)}
+    </div>
+
+    <div class="question-block">
+      <div class="question-title">3. 글자를 따라 써 보세요 <button class="tts-btn" onclick="readQuestion('na', 3)">🔊</button></div>
+      ${fillBlank('na-b1', '동해에는 ', '이 많다', '해수욕장')}
+      ${fillBlank('na-b2', '서해에는 ', '이 많다', '갯벌')}
+      ${fillBlank('na-b3', '남해에는 ', '이 많다', '섬')}
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn finish" onclick="goHome()">✅ 다 했어요!</button>
+    </div>
+  `;
+}
+
+// === 다: 사진 누르기 ===
+function reportDa() {
+  return `
+    <div class="level-badge">다</div>
+    <div class="question-block">
+      <div class="question-title">1. 동해, 서해, 남해를 눌러 보세요 <button class="tts-btn" onclick="readQuestion('da', 1)">🔊</button></div>
+      <div class="question-sub">바다를 한 곳씩 눌러보세요</div>
+      <div id="da-map-step" data-step="0">
+        <p style="text-align:center;font-size:22px;font-weight:700;color:#3b82f6;margin-bottom:10px" id="da-map-instr">파란색 동해를 눌러보세요</p>
+        <div class="map-wrap">${makeMapSVG('donghae', { showLabels: false })}</div>
+        <div style="text-align:center; margin-top:14px">
+          <button class="nav-btn next" style="font-size:22px; padding:14px 30px" onclick="daMapNext()">눌렀어요! ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <div class="question-title">2. 사진을 눌러 보세요 <button class="tts-btn" onclick="readQuestion('da', 2)">🔊</button></div>
+      ${singlePhoto('동해', 'https://images.wrks.ai/dalle/0FgqGQuaEQSU1GGKjy0RSns0x28zCZjIty7dHHcP.png', '해수욕장')}
+      ${singlePhoto('서해', 'https://images.wrks.ai/dalle/ZgxpEa9IS5wcffu92cPekKybKgbHEn8JvsgXRw5D.png', '갯벌')}
+      ${singlePhoto('남해', 'https://images.wrks.ai/dalle/hxFw4GBduLqdDwbA8jFLYRLf16JxPlTE9GmkMqan.png', '많은 섬')}
+    </div>
+
+    <div class="question-block">
+      <div class="question-title">3. 특징 사진을 눌러 보세요 <button class="tts-btn" onclick="readQuestion('da', 3)">🔊</button></div>
+      ${singlePhoto('동해 특징', 'https://images.wrks.ai/dalle/0FgqGQuaEQSU1GGKjy0RSns0x28zCZjIty7dHHcP.png', '해수욕장이 많다')}
+      ${singlePhoto('서해 특징', 'https://images.wrks.ai/dalle/VKa866vjzsmSUqNS1OeocqeW1yfE6i7Z3c6nVAd2.png', '해안선이 복잡하다')}
+      ${singlePhoto('남해 특징', 'https://images.wrks.ai/dalle/oUOC638jP3pQF4LX8rD0N6NOACURkn4knPekclfT.png', '섬이 많다')}
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn finish" onclick="goHome()">✅ 다 했어요!</button>
+    </div>
+  `;
+}
+
+// === 다 수준 지도 단계 전환 ===
+function daMapNext() {
+  const wrap = document.getElementById('da-map-step');
+  let step = parseInt(wrap.dataset.step) + 1;
+  wrap.dataset.step = step;
+  const steps = [
+    { key: 'donghae', label: '파란색 동해를 눌러보세요', color: '#3b82f6' },
+    { key: 'seohae', label: '노란색 서해를 눌러보세요', color: '#f59e0b' },
+    { key: 'namhae', label: '초록색 남해를 눌러보세요', color: '#10b981' }
+  ];
+  if (step >= steps.length) {
+    wrap.innerHTML = '<p style="text-align:center;font-size:24px;font-weight:800;color:#10b981;padding:20px">✅ 잘 했어요!</p>';
+    return;
+  }
+  const s = steps[step];
+  document.getElementById('da-map-instr').textContent = s.label;
+  document.getElementById('da-map-instr').style.color = s.color;
+  wrap.querySelector('.map-wrap').innerHTML = makeMapSVG(s.key, { showLabels: false });
+}
+
+// === 사진 선택 블록 ===
+function photoChoiceBlock(level, seaKey, seaName, count) {
+  // 정답 + 오답을 섞어서 count개 보여줌
+  const allPhotos = [
+    { sea: 'donghae', src: 'https://images.wrks.ai/dalle/0FgqGQuaEQSU1GGKjy0RSns0x28zCZjIty7dHHcP.png', cap: '해수욕장' },
+    { sea: 'donghae', src: 'https://images.wrks.ai/dalle/thC1AqeSjANWwchocAJZd1dbuOC5DvkTvpBqbHrr.png', cap: '단조로운 해안선' },
+    { sea: 'donghae', src: 'https://images.wrks.ai/dalle/HFUdoa8CWh7aeHWepMczS5bxS82dVzhFyXRYuMDv.png', cap: '일출' },
+    { sea: 'seohae', src: 'https://images.wrks.ai/dalle/ZgxpEa9IS5wcffu92cPekKybKgbHEn8JvsgXRw5D.png', cap: '갯벌' },
+    { sea: 'seohae', src: 'https://images.wrks.ai/dalle/VKa866vjzsmSUqNS1OeocqeW1yfE6i7Z3c6nVAd2.png', cap: '복잡한 해안선' },
+    { sea: 'namhae', src: 'https://images.wrks.ai/dalle/hxFw4GBduLqdDwbA8jFLYRLf16JxPlTE9GmkMqan.png', cap: '많은 섬' },
+    { sea: 'namhae', src: 'https://images.wrks.ai/dalle/oUOC638jP3pQF4LX8rD0N6NOACURkn4knPekclfT.png', cap: '복잡한 해안선' }
+  ];
+  const correctOptions = allPhotos.filter(p => p.sea === seaKey);
+  const wrongOptions = allPhotos.filter(p => p.sea !== seaKey);
+
+  // count개 중 정답 1개, 나머지는 오답
+  shuffle(correctOptions); shuffle(wrongOptions);
+  const choices = [correctOptions[0]];
+  for (let i = 0; i < count - 1; i++) choices.push(wrongOptions[i]);
+  shuffle(choices);
+
+  const id = `${level}-photo-${seaKey}`;
+  const html = choices.map((c, i) => `
+    <div class="photo-choice" onclick="selectPhoto('${id}', this, ${c.sea === seaKey})">
+      <img src="${c.src}" alt="${c.cap}" onerror="this.style.background='#e5e7eb';">
+      <div class="label">${c.cap}</div>
+    </div>
+  `).join('');
+
+  return `
+    <div style="margin-bottom:16px">
+      <div class="question-sub" style="font-weight:700">▶ ${seaName}의 사진을 골라 보세요</div>
+      <div class="photo-choices" id="${id}">${html}</div>
+    </div>
+  `;
+}
+
+function selectPhoto(groupId, el, isCorrect) {
+  const group = document.getElementById(groupId);
+  // 이미 정답을 맞췄으면 무시
+  if (group.dataset.done === 'true') return;
+  // 다른 선택 초기화
+  group.querySelectorAll('.photo-choice').forEach(p => {
+    p.classList.remove('selected', 'wrong');
+  });
+  if (isCorrect) {
+    el.classList.add('correct');
+    group.dataset.done = 'true';
+  } else {
+    el.classList.add('wrong');
+    setTimeout(() => el.classList.remove('wrong'), 800);
+  }
+}
+
+function singlePhoto(label, src, cap) {
+  return `
+    <div style="margin-bottom:16px">
+      <div class="question-sub" style="font-weight:700">▶ ${label}</div>
+      <div style="display:flex; justify-content:center">
+        <div class="photo-choice" style="max-width:300px" onclick="this.classList.add('correct')">
+          <img src="${src}" alt="${cap}" onerror="this.style.background='#e5e7eb';">
+          <div class="label" style="font-size:18px">${cap}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// === 빈칸 (캔버스) ===
+function fillBlank(id, before, after, hint) {
+  const hintHTML = hint ? `<div class="trace-hint" style="position:absolute; top:8px; left:14px;">${hint}</div>` : '';
+  return `
+    <div class="fill-sentence">
+      <span>${before}</span>
+      <div class="blank-canvas-wrap" style="position:relative">
+        ${hintHTML}
+        <canvas class="blank-canvas write-canvas" id="${id}" style="width:220px; height:60px;"></canvas>
+      </div>
+      <span>${after}</span>
+      <button class="tool-btn" onclick="clearCanvas('${id}')">🗑️</button>
+    </div>
+  `;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+// TTS 관련 변수
+let currentSpeech = null;
+
+// 문제 읽어주기 함수
+function readQuestion(level, questionNum) {
+  const ttsContents = {
+    'ga': {
+      1: '1번 문제. 지도에서 바다의 위치를 찾아 이름을 써 보세요. 동해, 서해, 남해를 알맞은 곳에 써 넣으세요.',
+      2: '2번 문제. 알맞은 사진을 골라 보세요. 동해, 서해, 남해에서 볼 수 있는 것의 사진을 골라 보세요.',
+      3: '3번 문제. 빈칸에 알맞은 말을 써 보세요. 동해에는 무엇이 많은지, 서해에는 무엇이 많은지, 남해에는 무엇이 많은지 써 보세요.'
+    },
+    'na': {
+      1: '1번 문제. 색깔 힌트를 보고 바다 이름을 써 보세요. 파란색은 동해, 노란색은 서해, 빨간색은 남해입니다. 점선을 따라 바다 이름을 써 보세요.',
+      2: '2번 문제. 알맞은 사진을 골라 보세요. 각 바다의 특징을 나타내는 사진을 골라 보세요.',
+      3: '3번 문제. 글자를 따라 써 보세요. 동해에서는 무엇을 볼 수 있는지, 서해에서는 무엇을 볼 수 있는지, 남해에서는 무엇을 볼 수 있는지 점선을 따라 써 보세요.'
+    },
+    'da': {
+      1: '1번 문제. 동해, 서해, 남해를 눌러 보세요. 파란색은 동해, 노란색은 서해, 빨간색은 남해입니다. 지도에서 바다를 찾아 눌러 보세요.',
+      2: '2번 문제. 사진을 눌러 보세요. 동해, 서해, 남해에서 볼 수 있는 것의 사진을 눌러 보세요.',
+      3: '3번 문제. 특징 사진을 눌러 보세요. 각 바다의 특징을 나타내는 사진을 눌러 보세요.'
+    }
+  };
+
+  // 현재 읽고 있으면 중지
+  if (currentSpeech) {
+    speechSynthesis.cancel();
+    currentSpeech = null;
+    return;
+  }
+
+  // Web Speech API 지원 확인
+  if (!('speechSynthesis' in window)) {
+    alert('음성 읽기 기능을 지원하지 않는 브라우저입니다.');
+    return;
+  }
+
+  const text = ttsContents[level][questionNum];
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'ko-KR';
+  utterance.rate = 0.9;
+  utterance.pitch = 1.0;
+
+  utterance.onend = function() {
+    currentSpeech = null;
+  };
+
+  currentSpeech = utterance;
+  speechSynthesis.speak(utterance);
+}
+
+// 화면 전환 시 음성 중지
+function stopCurrentSpeech() {
+  if (currentSpeech) {
+    speechSynthesis.cancel();
+    currentSpeech = null;
+  }
+}
+
+</script>
+</body>
+</html>
